@@ -1,0 +1,8 @@
+{
+  "actualServerUrl": "https://actual.bishop-morray.ts.net/",
+  "actualPassword": "#3H5Ddy473",
+  "actualSyncId": "e9e3df8a-cd93-4e0c-92d8-3f5472f864d7",
+  "aiServerUrl": "https://todds-ai.bishop-morray.ts.net/api/chat/completions",
+  "aiApiKey": "sk-bb835ecb80184cf885bfbf0877a1d5cb",
+  "aiModel": "qwen3.5:9b"
+}
