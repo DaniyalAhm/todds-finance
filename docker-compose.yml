@@ -1,0 +1,103 @@
+name: ai-budgeting
+
+services:
+  frontend:
+    container_name: ai-budgeting-frontend
+    image: ai-budgeting/frontend:local
+    build:
+      context: .
+      dockerfile: dockerfiles/frontend.Dockerfile
+      args:
+        NEXT_PUBLIC_ACTUAL_API_BASE: ${PUBLIC_BACKEND_URL:-http://localhost:3010}
+    labels:
+      com.ai-budgeting.service: frontend
+      com.ai-budgeting.role: web-ui
+    environment:
+      ACTUAL_PASSWORD: ${ACTUAL_PASSWORD:?Set ACTUAL_PASSWORD in .env}
+      AUTH_USERNAME: ${AUTH_USERNAME:-Authenticated user}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:3000/login',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - ai-budgeting
+
+  backend:
+    container_name: ai-budgeting-backend
+    image: ai-budgeting/backend:local
+    build:
+      context: .
+      dockerfile: dockerfiles/backend.Dockerfile
+    labels:
+      com.ai-budgeting.service: backend
+      com.ai-budgeting.role: api
+    environment:
+      PORT: 3010
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:3000}
+      FLASK_API_BASE: http://ml-backend:5000
+      ACTUAL_SERVER_URL: ${ACTUAL_SERVER_URL:-}
+      ACTUAL_PASSWORD: ${ACTUAL_PASSWORD:?Set ACTUAL_PASSWORD in .env}
+      ACTUAL_SYNC_ID: ${ACTUAL_SYNC_ID:-}
+      AI_SERVER_URL: ${AI_SERVER_URL:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-gemma4:e4b}
+    ports:
+      - "${BACKEND_PORT:-3010}:3010"
+    volumes:
+      - backend-cache:/app/cache
+      - backend-config:/app/data
+    depends_on:
+      ml-backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3010/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - ai-budgeting
+
+  ml-backend:
+    container_name: ai-budgeting-ml-backend
+    image: ai-budgeting/ml-backend:local
+    build:
+      context: .
+      dockerfile: dockerfiles/ml-backend.Dockerfile
+    labels:
+      com.ai-budgeting.service: ml-backend
+      com.ai-budgeting.role: entity-resolution-api
+    ports:
+      - "${ML_BACKEND_PORT:-5000}:5000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.create_connection(('127.0.0.1',5000),2); s.close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - ai-budgeting
+
+volumes:
+  backend-cache:
+    labels:
+      com.ai-budgeting.data: actual-budget-cache
+  backend-config:
+    labels:
+      com.ai-budgeting.data: application-config
+
+networks:
+  ai-budgeting:
+    name: ai-budgeting
+    labels:
+      com.ai-budgeting.network: application

@@ -1,0 +1,17 @@
+.git
+.gitignore
+.agents
+.codex
+.env
+.env.*
+!.env.docker.example
+**/node_modules
+**/.next
+**/coverage
+**/__pycache__
+**/*.py[cod]
+cache
+server/data
+npm-debug.log*
+*.md
+!ml-python/requirements.txt

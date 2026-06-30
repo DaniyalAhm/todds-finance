@@ -1,1 +1,5 @@
 /server/data/
+
+# Local Docker configuration may contain credentials.
+/.env
+/.env.docker
