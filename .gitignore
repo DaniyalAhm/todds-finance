@@ -1,5 +1,15 @@
-/server/data/
+# App/runtime data
+server/data/
+server/cache/
 
-# Local Docker configuration may contain credentials.
-/.env
-/.env.docker
+# Environment files / secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies
+server/node_modules/
+actual-ai/node_modules/
+
+# Next.js build output
+actual-ai/.next/
